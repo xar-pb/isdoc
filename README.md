@@ -6,7 +6,7 @@ ISDOC is an electronic invoicing format in the Czech Republic, which allows pape
 
 More about the ISDOC format:
 * Wikipedia: https://cs.wikipedia.org/wiki/ISDOC
-* Oficiální web: http://www.isdoc.org/
+* Official website: http://www.isdoc.org/
 
 ### Format specification
 * http://www.isdoc.cz/6.0/doc/isdoc.html
