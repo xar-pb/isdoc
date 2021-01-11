@@ -16,7 +16,7 @@ More about the ISDOC format:
 * http://isdoc.cz/6.0.1/doc-en/isdoc-invoice-6.0.1.html
 
 ## Installation
-So far, a minimalist version has been developed, allowing you to try exporting an invoice to an ISDOC file, which will be opened by the ISDOC reader application without an error message.
+So far, a minimalist version has been written, allowing you to try exporting an invoice to an ISDOC file, which will be opened by the ISDOC reader application without an error message.
 
 Just run the PHP file
 * example/index.php
