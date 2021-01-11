@@ -1,7 +1,7 @@
 # php ISDOC Writer (unofficial)
 The goal is a simple PHP class that allows you to export an accounting document to ISDOC format.
 
-## Co je ISDOC
+## What is ISDOC
 ISDOC is an electronic invoicing format in the Czech Republic, which allows paperless exchanging of invoices and other documents, their quick processing and portability
 
 More about the ISDOC format:
