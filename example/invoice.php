@@ -1,5 +1,4 @@
 <?php
-
 require_once '../src/Util/Isdoc/IsdocWriter.php';
 
 use Util\Isdoc\IsdocWriter;
@@ -83,4 +82,8 @@ $isdoc->taxTotal[$tax_rate]->TaxAmount = $tax_amount[$tax_rate];
 // celková daň v T.M. po odečtení odúčtovaných záloh
 $isdoc->TaxAmount =  $total_tax_amount;
 
-$isdoc->output();
+// $isdoc->output();
+
+$isdoc->outputFile = 0;
+echo $isdoc->output();
+
