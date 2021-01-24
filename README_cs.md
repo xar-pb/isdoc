@@ -3,6 +3,7 @@
 Cílem je jednoduchá PHP třída umožňující export účetního dokladu do formátu ISDOC.
 
 ## Co je ISDOC
+ISDOC je univerzální formát pro elektronickou výměnu faktur a účetních dokumentů.
 ISDOC je formát elektronické fakturace, který umožňuje bezpapírovou výměnu faktur a dalších dokladů, jejich rychlé zpracování a přenositelnost.
 
 Více o formátu:
