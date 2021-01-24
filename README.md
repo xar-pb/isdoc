@@ -2,7 +2,7 @@
 The goal is a simple PHP class that allows you to export an accounting document to ISDOC format.
 
 ## What is ISDOC
-ISDOC is a universal format for the electronic exchange of invoices and accounting documents.
+ISDOC is a universal format for the electronic exchange of invoices and accounting documents.  
 ISDOC is an electronic invoicing format in the Czech Republic, which allows paperless exchanging of invoices and other documents, their quick processing and portability.
 
 More about the ISDOC format:
@@ -20,9 +20,9 @@ More about the ISDOC format:
 So far, a minimalist version has been developed, allowing you to try exporting an invoice to an ISDOC file, which will be opened by the ISDOC reader application without an error message.
 
 Just run the PHP file
-* example/invoice.php
+* example/invoice.php  
 or
-* example/multiple.php
+* example/multiple.php  
 (for export of multiple accounting documents to a ZIP archive divided into directories according to the document type)
 
 ### ISDOC reader application for Windows
