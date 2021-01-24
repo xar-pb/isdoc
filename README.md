@@ -20,7 +20,10 @@ More about the ISDOC format:
 So far, a minimalist version has been developed, allowing you to try exporting an invoice to an ISDOC file, which will be opened by the ISDOC reader application without an error message.
 
 Just run the PHP file
-* example/index.php
+* example/invoice.php
+or
+* example/multiple.php
+(for export of multiple accounting documents to a ZIP archive divided into directories according to the document type)
 
 ### ISDOC reader application for Windows
 * http://www.isdoc.org/isdocreader/download/en
