@@ -1,5 +1,4 @@
 <?php
-
 namespace Util\Isdoc;
 
 class IsdocWriter
@@ -17,6 +16,9 @@ class IsdocWriter
     , 5 //Daňový ZL
     , 6 // Dobropis DZL
     );
+    
+    public $DocumentType;
+    public $DocumentTypeName;
     
     public $supplier; // stdClass
     
@@ -36,11 +38,40 @@ class IsdocWriter
     {
         if (array_key_exists($type, $this->documentTypesList)) {
             $this->DocumentType = $type;
+            $this->setDocumentTypeName($this->DocumentType);
             return true;
         } else {
             // $value not allowed
             return false;
         }
+    }
+    
+    public function setDocumentTypeName($type) {
+        switch ($this->DocumentType) {
+            case 1:
+                $name = 'Invoice';
+                break;
+            case 2:
+                $name = 'Credit';
+                break;
+            case 3:
+                $name = 'Debit';
+                break;
+            case 4:
+                $name = 'Advance';
+                break;
+            case 5:
+                $name = 'TaxAdvance';
+                break;
+            case 6:
+                $name = 'CreditTax';
+                break;
+            default:
+                $name = 'Other';
+                break;
+        }
+        $this->DocumentTypeName = $name;
+        return true;
     }
     
     public function output()
@@ -288,9 +319,9 @@ class IsdocWriter
         if ($this->outputFile) {
             header('Content-type: text/xml; charset=UTF-8');
             header('Content-disposition: attachment; filename="'.$this->ID.'.isdoc"');
+            echo $xml->saveXML();
+        } else {
+            return $xml->saveXML();
         }
-        
-        echo $xml->saveXML();
     }
-
 }
