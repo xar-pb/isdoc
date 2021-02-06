@@ -26,6 +26,8 @@ class IsdocWriter
     
     public $lines = array(); // array of invoice lines stdClass objects
     
+    public $taxTotal = array(); // field of sums of amounts in tax rates
+    
     public function __construct()
     {
         $this->supplier = new \stdClass;
@@ -78,6 +80,10 @@ class IsdocWriter
     {
         $xml = new \DomDocument('1.0', 'UTF-8');
         
+        $this->totalPriceWithoutVat = round($this->totalPriceWithoutVat, 2);
+        $this->totalPrice = round($this->totalPrice, 2);
+        $this->TaxAmount = round($this->TaxAmount, 2);
+        
         $root_element = $xml->createElement('Invoice');
         $root_element->setAttribute('xmlns', $this->xmlnsNameSpace);
         $root_element->setAttribute('version', $this->version);
@@ -116,7 +122,11 @@ class IsdocWriter
                 $sub2['PartyName'] = $xml->createElement('PartyName');
                 $sub['Party']->appendChild($sub2['PartyName']);
         
-                    $sub3['Name'] = $xml->createElement('Name', $this->supplier->name);
+                    $company = $this->supplier->companyName;
+                    if (empty($company)) {
+                        $company = $this->supplier->name.' '.$this->supplier->surname;
+                    }
+                    $sub3['Name'] = $xml->createElement('Name', $company);
                     $sub2['PartyName']->appendChild($sub3['Name']);
         
                 $sub2['PostalAddress'] = $xml->createElement('PostalAddress');
@@ -143,6 +153,27 @@ class IsdocWriter
                         $sub4['Name'] = $xml->createElement('Name', $this->supplier->address->countryName);
                         $sub3['Country']->appendChild($sub4['Name']);
         
+                if ($this->supplier->companyVatId and $this->VATApplicable) {
+                    $sub2['PartyTaxScheme'] = $xml->createElement('PartyTaxScheme');
+                    $sub['Party']->appendChild($sub2['PartyTaxScheme']);
+
+                        $sub3['CompanyID'] = $xml->createElement('CompanyID', $this->supplier->companyVatId);
+                        $sub2['PartyTaxScheme']->appendChild($sub3['CompanyID']);
+
+                        $sub3['TaxScheme'] = $xml->createElement('TaxScheme', 'VAT');
+                        $sub2['PartyTaxScheme']->appendChild($sub3['TaxScheme']);
+                }
+        
+                $sub2['Contact'] = $xml->createElement('Contact');
+                $sub['Party']->appendChild($sub2['Contact']);
+                
+                    $contact =  $this->supplier->name.' '.$this->supplier->surname;
+                    $sub3['Name'] = $xml->createElement('Name', $contact);
+                    $sub2['Contact']->appendChild($sub3['Name']);
+        
+                    $sub3['ElectronicMail'] = $xml->createElement('ElectronicMail', $this->supplier->email);
+                    $sub2['Contact']->appendChild($sub3['ElectronicMail']);
+                    
         // accounting customer party
         $nodes['AccountingCustomerParty'] = $xml->createElement('AccountingCustomerParty');
             
@@ -158,7 +189,11 @@ class IsdocWriter
                 $sub2['PartyName'] = $xml->createElement('PartyName');
                 $sub['Party']->appendChild($sub2['PartyName']);
         
-                    $sub3['Name'] = $xml->createElement('Name', $this->customer->name);
+                    $company = $this->customer->companyName;
+                    if (empty($company)) {
+                        $company = $this->customer->name.' '.$this->customer->surname;
+                    }
+                    $sub3['Name'] = $xml->createElement('Name', $company);
                     $sub2['PartyName']->appendChild($sub3['Name']);
         
                 $sub2['PostalAddress'] = $xml->createElement('PostalAddress');
@@ -185,6 +220,27 @@ class IsdocWriter
                         $sub4['Name'] = $xml->createElement('Name', $this->customer->address->countryName);
                         $sub3['Country']->appendChild($sub4['Name']);
         
+                if ($this->customer->companyVatId) {
+                    $sub2['PartyTaxScheme'] = $xml->createElement('PartyTaxScheme');
+                    $sub['Party']->appendChild($sub2['PartyTaxScheme']);
+                        
+                        $sub3['CompanyID'] = $xml->createElement('CompanyID', $this->customer->companyVatId);
+                        $sub2['PartyTaxScheme']->appendChild($sub3['CompanyID']);
+                        
+                        $sub3['TaxScheme'] = $xml->createElement('TaxScheme', 'VAT');
+                        $sub2['PartyTaxScheme']->appendChild($sub3['TaxScheme']);
+                }
+                
+                $sub2['Contact'] = $xml->createElement('Contact');
+                $sub['Party']->appendChild($sub2['Contact']);
+                
+                    $contact =  $this->customer->name.' '.$this->customer->surname;
+                    $sub3['Name'] = $xml->createElement('Name', $contact);
+                    $sub2['Contact']->appendChild($sub3['Name']);
+        
+                    $sub3['ElectronicMail'] = $xml->createElement('ElectronicMail', $this->customer->email);
+                    $sub2['Contact']->appendChild($sub3['ElectronicMail']);
+        
         // invoice lines
         $nodes['InvoiceLines'] = $xml->createElement('InvoiceLines');
 
@@ -196,32 +252,32 @@ class IsdocWriter
                 $sub2['ID'] = $xml->createElement('ID', $item->ID);
                 $sub['InvoiceLine']->appendChild($sub2['ID']);
             
-                $sub2['InvoicedQuantity'] = $xml->createElement('InvoicedQuantity', $item->InvoicedQuantity);
+                $sub2['InvoicedQuantity'] = $xml->createElement('InvoicedQuantity', (int) $item->InvoicedQuantity);
                 $sub2['InvoicedQuantity']->setAttribute('unitCode', 'Ks');
                 $sub['InvoiceLine']->appendChild($sub2['InvoicedQuantity']);
             
-                $sub2['LineExtensionAmount'] = $xml->createElement('LineExtensionAmount', $item->LineExtensionAmount);
+                $sub2['LineExtensionAmount'] = $xml->createElement('LineExtensionAmount', (float) $item->LineExtensionAmount);
                 $sub['InvoiceLine']->appendChild($sub2['LineExtensionAmount']);
                 
-                $sub2['LineExtensionAmountTaxInclusive'] = $xml->createElement('LineExtensionAmountTaxInclusive', $item->LineExtensionAmountTaxInclusive);
+                $sub2['LineExtensionAmountTaxInclusive'] = $xml->createElement('LineExtensionAmountTaxInclusive', (float) $item->LineExtensionAmountTaxInclusive);
                 $sub['InvoiceLine']->appendChild($sub2['LineExtensionAmountTaxInclusive']);
             
-                $sub2['LineExtensionTaxAmount'] = $xml->createElement('LineExtensionTaxAmount', $item->LineExtensionTaxAmount);
+                $sub2['LineExtensionTaxAmount'] = $xml->createElement('LineExtensionTaxAmount', (float) $item->LineExtensionTaxAmount);
                 $sub['InvoiceLine']->appendChild($sub2['LineExtensionTaxAmount']);
             
                 $sub2['UnitPrice'] = $xml->createElement('UnitPrice', $item->UnitPrice);
                 $sub['InvoiceLine']->appendChild($sub2['UnitPrice']);
             
-                $sub2['UnitPriceTaxInclusive'] = $xml->createElement('UnitPriceTaxInclusive', $item->UnitPriceTaxInclusive);
+                $sub2['UnitPriceTaxInclusive'] = $xml->createElement('UnitPriceTaxInclusive', (float) $item->UnitPriceTaxInclusive);
                 $sub['InvoiceLine']->appendChild($sub2['UnitPriceTaxInclusive']);
             
                 $sub2['ClassifiedTaxCategory'] = $xml->createElement('ClassifiedTaxCategory');
                 $sub['InvoiceLine']->appendChild($sub2['ClassifiedTaxCategory']);
 
-                    $sub3['Percent'] = $xml->createElement('Percent', $item->TaxPercent);
+                    $sub3['Percent'] = $xml->createElement('Percent', (float) $item->TaxPercent);
                     $sub2['ClassifiedTaxCategory']->appendChild($sub3['Percent']);
 
-                    $sub3['VATCalculationMethod'] = $xml->createElement('VATCalculationMethod', 0); // Způsob výpočtu DPH, 0-zdola, 1-shora
+                    $sub3['VATCalculationMethod'] = $xml->createElement('VATCalculationMethod', 1); // Způsob výpočtu DPH, 0-zdola, 1-shora
                     $sub2['ClassifiedTaxCategory']->appendChild($sub3['VATCalculationMethod']);
             
                 $sub2['Item'] = $xml->createElement('Item');
@@ -239,13 +295,13 @@ class IsdocWriter
             $sub['TaxSubTotal'] = $xml->createElement('TaxSubTotal');
             $nodes['TaxTotal']->appendChild($sub['TaxSubTotal']);
                 
-                $sub2['TaxableAmount'] = $xml->createElement('TaxableAmount', $taxSub->TaxableAmount);
+                $sub2['TaxableAmount'] = $xml->createElement('TaxableAmount', (float) $taxSub->TaxableAmount);
                 $sub['TaxSubTotal']->appendChild($sub2['TaxableAmount']);
 
-                $sub2['TaxAmount'] = $xml->createElement('TaxAmount', $taxSub->TaxAmount);
+                $sub2['TaxAmount'] = $xml->createElement('TaxAmount', (float) $taxSub->TaxAmount);
                 $sub['TaxSubTotal']->appendChild($sub2['TaxAmount']);
             
-                $sub2['TaxInclusiveAmount'] = $xml->createElement('TaxInclusiveAmount', $taxSub->TaxInclusiveAmount);
+                $sub2['TaxInclusiveAmount'] = $xml->createElement('TaxInclusiveAmount', (float) $taxSub->TaxInclusiveAmount);
                 $sub['TaxSubTotal']->appendChild($sub2['TaxInclusiveAmount']);
             
                 $sub2['AlreadyClaimedTaxableAmount'] = $xml->createElement('AlreadyClaimedTaxableAmount', 0);
@@ -269,23 +325,23 @@ class IsdocWriter
                 $sub2['TaxCategory'] = $xml->createElement('TaxCategory');
                 $sub['TaxSubTotal']->appendChild($sub2['TaxCategory']);
 
-                    $sub3['Percent'] = $xml->createElement('Percent', $taxSub->TaxPercent);
+                    $sub3['Percent'] = $xml->createElement('Percent', (float) $taxSub->TaxPercent);
                     $sub2['TaxCategory']->appendChild($sub3['Percent']);
 
-                    $sub3['VATApplicable'] = $xml->createElement('VATApplicable', 'true');
+                    $sub3['VATApplicable'] = $xml->createElement('VATApplicable', $this->VATApplicable);
                     $sub2['TaxCategory']->appendChild($sub3['VATApplicable']);
         }
         
-            $sub['TaxAmount'] = $xml->createElement('TaxAmount', $this->TaxAmount);
+            $sub['TaxAmount'] = $xml->createElement('TaxAmount', (float) $this->TaxAmount);
             $nodes['TaxTotal']->appendChild($sub['TaxAmount']);
         
         // legal monetary total
         $nodes['LegalMonetaryTotal'] = $xml->createElement('LegalMonetaryTotal');
         
-            $sub['TaxExclusiveAmount'] = $xml->createElement('TaxExclusiveAmount', 999);
+            $sub['TaxExclusiveAmount'] = $xml->createElement('TaxExclusiveAmount', (float) $this->totalPriceWithoutVat);
             $nodes['LegalMonetaryTotal']->appendChild($sub['TaxExclusiveAmount']);
         
-            $sub['TaxInclusiveAmount'] = $xml->createElement('TaxInclusiveAmount', 999);
+            $sub['TaxInclusiveAmount'] = $xml->createElement('TaxInclusiveAmount', (float) $this->totalPrice);
             $nodes['LegalMonetaryTotal']->appendChild($sub['TaxInclusiveAmount']);
         
             $sub['AlreadyClaimedTaxExclusiveAmount'] = $xml->createElement('AlreadyClaimedTaxExclusiveAmount', 0);
@@ -294,10 +350,10 @@ class IsdocWriter
             $sub['AlreadyClaimedTaxInclusiveAmount'] = $xml->createElement('AlreadyClaimedTaxInclusiveAmount', 0);
             $nodes['LegalMonetaryTotal']->appendChild($sub['AlreadyClaimedTaxInclusiveAmount']);
         
-            $sub['DifferenceTaxExclusiveAmount'] = $xml->createElement('DifferenceTaxExclusiveAmount', 999);
+            $sub['DifferenceTaxExclusiveAmount'] = $xml->createElement('DifferenceTaxExclusiveAmount', (float) $this->totalPriceWithoutVat);
             $nodes['LegalMonetaryTotal']->appendChild($sub['DifferenceTaxExclusiveAmount']);
         
-            $sub['DifferenceTaxInclusiveAmount'] = $xml->createElement('DifferenceTaxInclusiveAmount', 999);
+            $sub['DifferenceTaxInclusiveAmount'] = $xml->createElement('DifferenceTaxInclusiveAmount', (float) $this->totalPrice);
             $nodes['LegalMonetaryTotal']->appendChild($sub['DifferenceTaxInclusiveAmount']);
         
             $sub['PayableRoundingAmount'] = $xml->createElement('PayableRoundingAmount', 0);
@@ -306,8 +362,22 @@ class IsdocWriter
             $sub['PaidDepositsAmount'] = $xml->createElement('PaidDepositsAmount', 0);
             $nodes['LegalMonetaryTotal']->appendChild($sub['PaidDepositsAmount']);
         
-            $sub['PayableAmount'] = $xml->createElement('PayableAmount', 0);
+            $sub['PayableAmount'] = $xml->createElement('PayableAmount', (float) $this->totalPrice);
             $nodes['LegalMonetaryTotal']->appendChild($sub['PayableAmount']);
+        
+        // payment means
+        /*
+        $nodes['PaymentMeans'] = $xml->createElement('PaymentMeans');
+        
+            $sub['Payment'] = $xml->createElement('Payment');
+            $nodes['PaymentMeans']->appendChild($sub['Payment']);
+        
+                $sub2['Details'] = $xml->createElement('Details');
+                $sub['Payment']->appendChild($sub2['Details']);
+                
+                    $sub3['VariableSymbol'] = $xml->createElement('VariableSymbol', $this->variableSymbol);
+                    $sub2['Details']->appendChild($sub3['VariableSymbol']);
+        */
         
         foreach ($nodes as $key => $val) {
             $root_element->appendChild($nodes[$key]);
