@@ -1,26 +1,40 @@
 <?php
 require_once '../src/Util/Isdoc/IsdocWriter.php';
 require_once '../src/Util/Isdoc/IsdocZipArchive.php';
+require_once '../src/Util/UUID/UUID.php';
 
 use Util\Isdoc\IsdocWriter;
 use Util\Isdoc\IsdocZipArchive;
+use Util\UUID\UUID;
 
 $isdoc = new IsdocWriter;
 
 $isdoc->setDocumentType(1);
 $isdoc->ID = 'FA20200001'; // ID, lidsky čitelné číslo dokladu
-$isdoc->UUID = '831EB3F1-29D6-4291-A895-A44422CC6EB6'; // GUID, identifikace od emitujícího systému
-$isdoc->IssuingSystem = 'Trevlix'; // aplikace vystavujici doklad
+
+// UUID v5: Given the same namespace and name, the output is always the same.
+// PLEASE NOTE: use e.g. https://www.uuidtools.com/v5 and generate your own random namespace
+$uuid_namespace = 'a092cd34-6898-11eb-818d-339fe7f487c4'; 
+$uuid_seed = $isdoc->ID;
+$v5uuid = UUID::v5($uuid_namespace, $uuid_seed);
+$isdoc->UUID = $v5uuid; // GUID, identifikace od emitujícího systému
+
+$isdoc->IssuingSystem = 'MY APP'; // aplikace vystavujici doklad
 
 $isdoc->IssueDate = '2020-10-28'; // Datum vystavení
 $isdoc->TaxPointDate = '2020-10-28'; // Datum plnění DPH
-$isdoc->VATApplicable = 'false'; // Podléhá DPH
+$isdoc->VATApplicable = 'true'; // Podléhá DPH
 $isdoc->Note = 'Poznámka k faktuře';
 
 $isdoc->LocalCurrencyCode = 'CZK'; // Lokální měna dokladu, vždy povinná položka-
 
 $isdoc->supplier->id = '987654321'; // IČO firmy
-$isdoc->supplier->name = 'Čulibrk, a.s.';
+$isdoc->supplier->companyVatId = 'CZ987654321'; // DIČ firmy
+$isdoc->supplier->companyName = 'Čulibrk, a.s.';
+
+$isdoc->supplier->name = 'Jan';
+$isdoc->supplier->surname = 'Dařbuján';
+$isdoc->supplier->email = 'darbujan@pandrhola.cz';
 
 $isdoc->supplier->address->street = 'Krátká';
 $isdoc->supplier->address->streetNumber = '10001';
@@ -30,7 +44,12 @@ $isdoc->supplier->address->countryCode = 'CZ';
 $isdoc->supplier->address->countryName = 'Česko';
 
 $isdoc->customer->id = '123456789';
-$isdoc->customer->name = 'Test, s.r.o.';
+$isdoc->customer->companyVatId = 'CZ123456789'; // DIČ firmy
+$isdoc->customer->companyName = 'Test, s.r.o.';
+
+$isdoc->customer->name = 'Eva';
+$isdoc->customer->surname = 'Pandrholová';
+$isdoc->customer->email = 'eva@pandrholova.cz';
 
 $isdoc->customer->address->street = 'Krátká';
 $isdoc->customer->address->streetNumber = '10001';
@@ -41,7 +60,7 @@ $isdoc->customer->address->countryName = 'Česko';
 
 // declare tax counters
 $taxable_amount = $tax_inclusive_amount = $tax_amount  = array();
-$total_tax_amount = 0;
+$total_price_without_vat = $total_price = $total_tax_amount = 0;
 
 // invoice lines
 $i=1;
@@ -69,6 +88,8 @@ $tax_inclusive_amount[$tr] += $isdoc->lines[$i]->LineExtensionAmountTaxInclusive
 $tax_amount[$tr] += $isdoc->lines[$i]->LineExtensionTaxAmount;
 
 $total_tax_amount += $isdoc->lines[$i]->LineExtensionTaxAmount;
+$total_price_without_vat += $isdoc->lines[$i]->LineExtensionAmount;
+$total_price += $isdoc->lines[$i]->LineExtensionAmountTaxInclusive;
 
 // tax rates recapitulation
 $tax_rate = 21;
@@ -83,6 +104,10 @@ $isdoc->taxTotal[$tax_rate]->TaxAmount = $tax_amount[$tax_rate];
 
 // celková daň v T.M. po odečtení odúčtovaných záloh
 $isdoc->TaxAmount =  $total_tax_amount;
+
+// celkové částky, vždy bez daně v tuzemské a cizí měně a s daní totéž
+$isdoc->totalPrice = $total_price;
+$isdoc->totalPriceWithoutVat = $total_price_without_vat;
 
 // $isdoc->output();
 
